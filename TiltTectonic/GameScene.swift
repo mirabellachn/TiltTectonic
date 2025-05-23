@@ -11,6 +11,8 @@ import SwiftUI
 class GameScene: SKScene, SKPhysicsContactDelegate {
     var platform: SKShapeNode!
     var shapesDropped = 0
+    var hasEnded = false
+
     var externalTiltBinding: Binding<Double> = .constant(0)
     var onWin: (() -> Void)?
     var onLose: (() -> Void)?
@@ -19,17 +21,23 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         backgroundColor = .white
         physicsWorld.gravity = CGVector(dx: 0, dy: -9.8)
         physicsWorld.contactDelegate = self
-        shapesDropped = 0 // reset counter
+        shapesDropped = 0
+        hasEnded = false
         addPlatform()
         startDroppingShapes()
     }
     
     func addPlatform() {
-        platform = SKShapeNode(rectOf: CGSize(width: 350, height: 20))
+        let platformSize = CGSize(width: 350, height: 30)
+        platform = SKShapeNode(rectOf: platformSize)
         platform.fillColor = .darkGray
         platform.position = CGPoint(x: frame.midX, y: 100)
-        platform.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: 200, height: 20))
-        platform.physicsBody?.isDynamic = false
+        let body = SKPhysicsBody(rectangleOf: platformSize)
+        body.isDynamic = false
+        body.categoryBitMask = 0x1 << 0
+        body.contactTestBitMask = 0x1 << 1
+        body.collisionBitMask = 0x1 << 1
+        platform.physicsBody = body
         platform.name = "platform"
         addChild(platform)
     }
@@ -66,18 +74,26 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         shape.fillColor = SKColor.random()
         shape.position = CGPoint(x: CGFloat.random(in: 80...320), y: frame.maxY)
-        shape.physicsBody = SKPhysicsBody(polygonFrom: shape.path ?? CGPath(rect: CGRect(x: -size/2, y: -size/2, width: size, height: size), transform: nil))
-        shape.physicsBody?.restitution = 0.2
+        
+        let body = SKPhysicsBody(polygonFrom: shape.path ?? CGPath(rect: CGRect(x: -size/2, y: -size/2, width: size, height: size), transform: nil))
+        body.restitution = 0.2
+        body.friction = 0.8
+        body.linearDamping = 0.5
+        body.usesPreciseCollisionDetection = true
+        body.categoryBitMask = 0x1 << 1
+        body.contactTestBitMask = 0x1 << 0
+        body.collisionBitMask = 0x1 << 0
+        shape.physicsBody = body
+        
         shape.name = "falling"
         addChild(shape)
-        
         shapesDropped += 1
         
         if shapesDropped == 10 {
-            // delay for stack to settle
             run(SKAction.wait(forDuration: 3.0)) { [weak self] in
                 guard let self = self else { return }
-                if !self.hasAnyFallen() {
+                if !self.hasAnyFallen() && !self.hasEnded {
+                    self.hasEnded = true
                     DispatchQueue.main.async {
                         self.onWin?()
                     }
@@ -87,12 +103,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     
     override func update(_ currentTime: TimeInterval) {
-        // update tilt
         let tiltAngle = CGFloat(externalTiltBinding.wrappedValue) * .pi / 180
         platform.zRotation = tiltAngle
     }
     
     override func didSimulatePhysics() {
+        guard !hasEnded else { return }
+        
         for node in children {
             if node.name == "falling", node.position.y < -50 {
                 gameOver()
@@ -102,6 +119,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     
     func gameOver() {
+        guard !hasEnded else { return }
+        hasEnded = true
         removeAction(forKey: "dropLoop")
         isPaused = true
         DispatchQueue.main.async {

@@ -24,6 +24,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         shapesDropped = 0
         hasEnded = false
         addPlatform()
+        addWeight()
         startDroppingShapes()
     }
     
@@ -36,10 +37,31 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         body.isDynamic = false
         body.categoryBitMask = 0x1 << 0
         body.contactTestBitMask = 0x1 << 1
-        body.collisionBitMask = 0x1 << 1
+        body.collisionBitMask = 0x1 << 1 | 0x1 << 2
         platform.physicsBody = body
         platform.name = "platform"
         addChild(platform)
+    }
+    
+    func addWeight() {
+        let weightSize = CGSize(width: 60, height: 60)
+        let weight = SKShapeNode(circleOfRadius: weightSize.width / 2)
+        weight.fillColor = .black
+        // Posisi tepat di atas platform
+        weight.position = CGPoint(x: frame.midX, y: platform.position.y + 50)
+        
+        let body = SKPhysicsBody(circleOfRadius: weightSize.width / 2)
+        body.mass = 5.0            // Massa pemberat lebih besar
+        body.friction = 0.9
+        body.restitution = 0.1
+        body.linearDamping = 0.3
+        body.categoryBitMask = 0x1 << 2
+        body.contactTestBitMask = 0x1 << 1
+        body.collisionBitMask = 0x1 << 0 | 0x1 << 1 | 0x1 << 2
+        weight.physicsBody = body
+        
+        weight.name = "weight"
+        addChild(weight)
     }
     
     func startDroppingShapes() {
@@ -81,8 +103,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         body.linearDamping = 0.5
         body.usesPreciseCollisionDetection = true
         body.categoryBitMask = 0x1 << 1
-        body.contactTestBitMask = 0x1 << 0
-        body.collisionBitMask = 0x1 << 0
+        body.contactTestBitMask = 0x1 << 0 | 0x1 << 2
+        body.collisionBitMask = 0x1 << 0 | 0x1 << 2
         shape.physicsBody = body
         
         shape.name = "falling"

@@ -55,14 +55,6 @@ If any shape falls below the screen, you lose the game.
 
 ---
 
-## Screenshots
-
-| Gameplay                                | Tilt Control                          |
-|-----------------------------------------|----------------------------------------|
-| *(Add screenshot here)*                 | *(Add screenshot here)*               |
-
----
-
 ## My Contributions
 
 I developed **TiltTectonic** end-to-end, including:

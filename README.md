@@ -2,6 +2,8 @@
 
 **TiltTectonic** is a simple physics-based balancing game built with **SpriteKit** and **SwiftUI**. Your goal is to tilt the platform and stack falling shapes without letting them fall off.
 
+<img width="262" alt="Screenshot 2025-07-01 at 21 45 35" src="https://github.com/user-attachments/assets/3675da5a-3241-4e8b-a548-ee8b19447bfc" />
+
 ---
 
 ## Features
